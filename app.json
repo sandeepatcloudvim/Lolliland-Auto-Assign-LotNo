@@ -1,0 +1,37 @@
+{
+  "id": "851eb1c8-051d-4544-825a-faf0c52a665b",
+  "name": "Auto Assign Lot",
+  "publisher": "LOLLILAND",
+  "version": "19.0.0.0",
+  "brief": "",
+  "description": "",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "dependencies": [
+    {
+      "appId": "fa77d6f1-9c9d-44be-a9c5-cbfa8109bd15",
+      "name": "Lolliland_BC",
+      "publisher": "Nexon Asia Pacific Pty Ltd",
+      "version": "1.0.0.51"
+
+    }
+  ],
+  "screenshots": [],
+  "platform": "1.0.0.0",
+  "application": "19.0.0.0",
+  "idRanges": [
+    {
+      "from": 50000,
+      "to": 99999
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": false,
+    "includeSourceInSymbolFile": false
+  },
+  "runtime": "8.0"
+}
