@@ -26,6 +26,8 @@ pageextension 54510 "LOLI_ExtendWarehouseReceipt" extends "Warehouse Receipt"
 
         }
     }
+    var
+        ShowMessage: Boolean;
 
     local procedure InsertTrackingLines()
     var
@@ -34,12 +36,14 @@ pageextension 54510 "LOLI_ExtendWarehouseReceipt" extends "Warehouse Receipt"
         ErrorTable: Record "Error Message";
         ItemRec: Record Item;
         InvSetup: Record "Inventory Setup";
+
         Text001: Label 'Item Tracking Lines for the Order: %1  has been created successfully';
         Text002: Label 'Would you like to auto fill the tracking line for the Order No %1';
     begin
+
         IF NOT CONFIRM(Text002, FALSE, Rec."No.") THEN
             EXIT;
-
+        ShowMessage := false;
         RecWarehouserecptLine.RESET;
         RecWarehouserecptLine.SETRANGE("No.", Rec."No.");
         RecWarehouserecptLine.SETFILTER(Quantity, '>%1', 0);
@@ -55,7 +59,8 @@ pageextension 54510 "LOLI_ExtendWarehouseReceipt" extends "Warehouse Receipt"
                 UNTIL RecWarehouserecptLine.NEXT = 0;
             end;
         end;
-        MESSAGE('Tracking lines for Order : %1 have been created successfully', Rec."No.");
+        if ShowMessage then
+            MESSAGE('Tracking lines for Order : %1 have been created successfully', Rec."No.");
     end;
 
     local procedure LOLICreateReservationEntry(WarehouseRecptLineLine: Record "Warehouse Receipt Line")
@@ -90,7 +95,8 @@ pageextension 54510 "LOLI_ExtendWarehouseReceipt" extends "Warehouse Receipt"
         ReservEntry.Validate("Expiration Date", CALCDATE('12M', TODAY));
         ReservEntry.VALIDATE("Expected Receipt Date", LocPurchLine."Expected Receipt Date");
         ReservEntry.Positive := true;
-        ReservEntry.Insert();
+        if ReservEntry.Insert() then
+            ShowMessage := true;
     end;
 
     local procedure GetLastEntryNo(): Integer;

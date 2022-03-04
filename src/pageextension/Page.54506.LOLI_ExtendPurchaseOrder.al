@@ -27,6 +27,7 @@ pageextension 54506 "LOLI_ExtendPurchaseOrder" extends "Purchase Order"
     var
         myInt: Integer;
         recReservationEntry: Record "Reservation Entry";
+        ShowMessage: Boolean;
 
     local procedure InsertTrackingLines()
     var
@@ -36,9 +37,11 @@ pageextension 54506 "LOLI_ExtendPurchaseOrder" extends "Purchase Order"
         ErrorTable: Record "Error Message";
         ItemRec: Record Item;
         invSetup: Record "Inventory Setup";
+
         Text001: Label 'Item Tracking Lines for the Order: %1  has been created successfully.';
         Text002: Label 'Would you like to auto fill the tracking line for the Order No %1';
     begin
+        ShowMessage := false;
         Rec.TestField(Status, 0);
         IF NOT CONFIRM(Text002, FALSE, Rec."No.") THEN
             EXIT;
@@ -60,8 +63,8 @@ pageextension 54506 "LOLI_ExtendPurchaseOrder" extends "Purchase Order"
                     END;
                 end;
             UNTIL RecPurchaseLine.NEXT = 0;
-
-        MESSAGE('Tracking lines for Purchase order : %1 have been created successfully', Rec."No.");
+        if ShowMessage then
+            MESSAGE('Tracking lines for Purchase order : %1 have been created successfully', Rec."No.");
 
     end;
 
@@ -102,7 +105,8 @@ pageextension 54506 "LOLI_ExtendPurchaseOrder" extends "Purchase Order"
         ReservEntry.Validate("Expiration Date", CALCDATE('12M', TODAY));
         ReservEntry.VALIDATE("Expected Receipt Date", PurchLine."Expected Receipt Date");
         ReservEntry.Positive := true;
-        ReservEntry.Insert();
+        if ReservEntry.Insert() then
+            ShowMessage := true;
     end;
 
     local procedure GetLastEntryNo(): Integer;

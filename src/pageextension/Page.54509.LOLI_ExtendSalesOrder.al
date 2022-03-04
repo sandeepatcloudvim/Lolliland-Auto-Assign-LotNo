@@ -27,6 +27,7 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
     var
         myInt: Integer;
         recReservationEntry: Record "Reservation Entry";
+        ShowMessage: Boolean;
 
     local procedure InsertTrackingLines()
     var
@@ -35,6 +36,7 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
         ReservationEntry: Record "Reservation Entry";
         ErrorTable: Record "Error Message";
         InvSetup: Record "Inventory Setup";
+
 
         ItemRec: Record Item;
         Text001: Label 'Item Tracking Lines for the Order: %1  has been created successfully';
@@ -46,9 +48,8 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
         InvSetup.get;
         LOLIDeleteReservationEntry(Rec);
 
-
+        ShowMessage := false;
         RecSalesLine.RESET;
-
         RecSalesLine.SETRANGE("Document Type", RecSalesLine."Document Type"::Order);
         RecSalesLine.SETRANGE("Document No.", Rec."No.");
         RecSalesLine.SETRANGE(Type, RecSalesLine.Type::Item);
@@ -64,7 +65,8 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
                     END;
                 end;
             UNTIL RecSalesLine.NEXT = 0;
-        MESSAGE('Tracking lines for Sales order : %1 have been created successfully', Rec."No.");
+        if ShowMessage then
+            MESSAGE('Tracking lines for Sales order : %1 have been created successfully', Rec."No.");
     end;
 
     procedure LOLIDeleteReservationEntry(SalesHead: Record "Sales Header")
@@ -227,7 +229,9 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
         ReservEntry.VALIDATE("Lot No.", ItemLedgerEntry."Lot No.");
         ReservEntry.Validate("Expiration Date", ItemLedgerEntry."Expiration Date");
         ReservEntry.Validate("Shipment Date", SalesLine."Shipment Date");
-        ReservEntry.Insert();
+        if ReservEntry.Insert() then
+            ShowMessage := true;
+
     end;
 
     local procedure LOLIInsertErrorLog(LocSalesLine: Record "Sales Line"; TotalQuantity: Integer; VAR ErrorTable: Record "Error Message")

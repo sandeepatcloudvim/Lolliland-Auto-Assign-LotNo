@@ -27,6 +27,7 @@ pageextension 54511 "LOLI_ExtendWarehouseShipment" extends "Warehouse Shipment"
     var
         myInt: Integer;
         recReservationEntry: Record "Reservation Entry";
+        ShowMessage: Boolean;
 
     local procedure InsertTrackingLines()
     var
@@ -39,11 +40,12 @@ pageextension 54511 "LOLI_ExtendWarehouseShipment" extends "Warehouse Shipment"
         Text001: Label 'Item Tracking Lines for the Order: %1  has been created successfully';
         Text002: Label 'Would you like to auto fill the tracking line for the Order No %1';
     begin
+
         Rec.TestField(Status, 0);
         IF NOT CONFIRM(Text002, FALSE, Rec."No.") THEN
             EXIT;
         InvSetup.get;
-
+        ShowMessage := false;
         RecWhShipmentLine.RESET;
         RecWhShipmentLine.SETRANGE("No.", Rec."No.");
         RecWhShipmentLine.SETFILTER(Quantity, '>%1', 0);
@@ -55,15 +57,14 @@ pageextension 54511 "LOLI_ExtendWarehouseShipment" extends "Warehouse Shipment"
                         IF ItemRec.Type = ItemRec.Type::Inventory THEN BEGIN
                             RecSalesLine.get(RecSalesLine."Document Type"::Order, RecWhShipmentLine."Source No.", RecWhShipmentLine."Source Line No.");
                             LOLIAutoFillTrackingLines(RecSalesLine, ErrorTable);
+
                         END;
                     END;
                 UNTIL RecWhShipmentLine.NEXT = 0;
             end;
         end;
-
-        MESSAGE('Tracking lines for Order : %1 have been created successfully', Rec."No.");
-
-
+        if ShowMessage then
+            MESSAGE('Tracking lines for Order : %1 have been created successfully', Rec."No.");
     end;
 
     procedure LOLIDeleteReservationEntry(WarehouseShipmentLine: Record "Warehouse Shipment line")
@@ -227,7 +228,8 @@ pageextension 54511 "LOLI_ExtendWarehouseShipment" extends "Warehouse Shipment"
         ReservEntry.VALIDATE("Lot No.", ItemLedgerEntry."Lot No.");
         ReservEntry.Validate("Expiration Date", ItemLedgerEntry."Expiration Date");
         ReservEntry.Validate("Shipment Date", SalesLine."Shipment Date");
-        ReservEntry.Insert();
+        if ReservEntry.Insert() then
+            ShowMessage := true;
     end;
 
     local procedure LOLIInsertErrorLog(LocSalesLine: Record "Sales Line"; TotalQuantity: Integer; VAR ErrorTable: Record "Error Message")
