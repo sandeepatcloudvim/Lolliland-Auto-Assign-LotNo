@@ -2,7 +2,14 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
 {
     layout
     {
-        // Add changes to page layout here
+        addafter("External Document No.")
+        {
+            field("PO Number"; Rec."PO Number")
+            {
+                ApplicationArea = All;
+                Caption = 'PO Number';
+            }
+        }
     }
 
     actions
@@ -60,7 +67,7 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
                     IF ItemRec.GET(RecSalesLine."No.") THEN BEGIN
                         IF ItemRec.Type = ItemRec.Type::Inventory THEN BEGIN
                             LOLIDeleteUnusedReservationEntry(ItemRec."No.", RecSalesLine."Location Code");
-                            LOLIAutoFillTrackingLines(RecSalesLine, ErrorTable);
+                            LOLIAutoFillTrackingLines(Rec, RecSalesLine, ErrorTable);
                         END;
                     END;
                 end;
@@ -114,13 +121,13 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
         EXIT(ReservationQty)
     end;
 
-    local procedure LOLIAutoFillTrackingLines(SalesLine: Record "Sales Line"; VAR ErrorTable: Record "Error Message"): Boolean
+    local procedure LOLIAutoFillTrackingLines(SalesHeader: Record "Sales Header"; SalesLine: Record "Sales Line"; VAR ErrorTable: Record "Error Message"): Boolean
     var
         AvablLotQty: Decimal;
         ReservEntry: Record "Reservation Entry";
         ItemLedgerEntry: Record "Item Ledger Entry";
         ILE1: Record "Item Ledger Entry";
-
+        PostedPurchaseRecpt: Record "Purch. Rcpt. Header";
         LotQty: Decimal;
         TotalILEQty: Decimal;
         RequiredSaleLineQty: Decimal;
@@ -133,12 +140,21 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
         ILERemainingQty: Decimal;
         lastentryNo: Integer;
         ItemLedgerEntry1: Record "Item Ledger Entry";
+        PurchaseNumber: Code[20];
+        POAvailable: Boolean;
     begin
 
         TotalILEQty := 0;
         ReserveQty := 0;
 
+        PostedPurchaseRecpt.Reset();
+        PostedPurchaseRecpt.SetRange("Order No.", SalesHeader."PO Number");
+        if PostedPurchaseRecpt.FindFirst() then
+            POAvailable := true;
+
         ItemLedgerEntry.RESET;
+        if POAvailable then
+            ItemLedgerEntry.SetRange("Document No.", PostedPurchaseRecpt."No.");
         ItemLedgerEntry.SETRANGE("Item No.", SalesLine."No.");
         ItemLedgerEntry.SetRange("Location Code", SalesLine."Location Code");
         ItemLedgerEntry.SETFILTER("Remaining Quantity", '>%1', 0);
@@ -163,9 +179,11 @@ pageextension 54509 "LOLI_ExtendSalesOrder" extends "Sales Order"
         ReservEntry.Reset();
         if ReservEntry.FindLast() then
             lastentryNo := ReservEntry."Entry No.";
-
+        //AGT
         ItemLedgerEntry.RESET;
         ItemLedgerEntry.SETCURRENTKEY("Expiration Date");
+        if POAvailable then
+            ItemLedgerEntry.SetRange("Document No.", PostedPurchaseRecpt."No.");
         ItemLedgerEntry.SETRANGE("Item No.", SalesLine."No.");
         ItemLedgerEntry.SetRange("Location Code", SalesLine."Location Code");
         ItemLedgerEntry.SETFILTER("Remaining Quantity", '>%1', 0);
